@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
   s.add_dependency('mustache', [">= 0.11.2", "< 1.0.0"])
   s.add_dependency('sanitize', "~> 1.1")
   s.add_dependency('nokogiri', "~> 1.4")
+  s.add_dependency('rack-openid', "~> 1.2.0")
 
   s.add_development_dependency('RedCloth')
   s.add_development_dependency('mocha')
