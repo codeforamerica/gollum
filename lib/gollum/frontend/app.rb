@@ -2,6 +2,7 @@ require 'cgi'
 require 'sinatra'
 require 'gollum'
 require 'mustache/sinatra'
+require 'rack/openid'
 
 require 'gollum/frontend/views/layout'
 require 'gollum/frontend/views/editable'
@@ -13,6 +14,9 @@ module Precious
     dir = File.dirname(File.expand_path(__FILE__))
 
     # We want to serve public assets for now
+
+    use Rack::Session::Cookie
+    use Rack::OpenID
 
     set :public,    "#{dir}/public"
     set :static,    true
@@ -40,6 +44,25 @@ module Precious
 
     get '/' do
       show_page_or_file('Home')
+    end
+
+    get '/login' do
+      mustache :login
+    end
+
+    post '/login' do
+      if resp = request.env["rack.openid.response"]
+        if resp.status == :success
+          p "Welcome: #{resp.display_identifier}"
+        else
+          p "Error: #{resp.status}"
+        end
+      else
+        headers 'WWW-Authenticate' => Rack::OpenID.build_header(
+          :identifier => params["openid_identifier"]
+        )
+        throw :halt, [401, 'got openid?']
+      end
     end
 
     get '/edit/*' do
