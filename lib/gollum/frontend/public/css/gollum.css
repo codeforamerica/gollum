@@ -663,6 +663,21 @@ ul.actions {
     padding: 0;
   }
 
+.login_button {
+  font-size: 14px;
+  height: 30px;
+  line-height: 30px;
+}
+
+.google_logo {
+  height: 18px;
+  position: relative;
+  top: 3px;
+}
+
+#openid_identifier {
+  display: none;
+}
 
 #MathJax_Message {
   display: none;

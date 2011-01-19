@@ -43,7 +43,16 @@ module Precious
     end
 
     get '/' do
-      show_page_or_file('Home')
+      if session[:openid]
+        users = File.read('.users').each_line.map{|l| l.strip}
+        if users.find{|u| u == session[:openid]}
+          return show_page_or_file('Home')
+        else
+          @message = "Your membership on this wiki is pending moderator approval. Your application code is: #{session[:openid]}"
+          return mustache :error
+        end
+      end
+      redirect '/login'
     end
 
     get '/login' do
@@ -53,9 +62,9 @@ module Precious
     post '/login' do
       if resp = request.env["rack.openid.response"]
         if resp.status == :success
-          p "Welcome: #{resp.display_identifier}"
+          session[:openid] = resp.display_identifier
+          File.open('.waitlist', 'a+') {|f| f.write(resp.display_identifier)}
         else
-          p "Error: #{resp.status}"
         end
       else
         headers 'WWW-Authenticate' => Rack::OpenID.build_header(
@@ -63,6 +72,12 @@ module Precious
         )
         throw :halt, [401, 'got openid?']
       end
+      redirect '/'
+    end
+    
+    get '/logout' do
+      session[:openid] = nil
+      redirect '/'
     end
 
     get '/edit/*' do
