@@ -17,6 +17,10 @@ module Precious
 
     use Rack::Session::Cookie
     use Rack::OpenID
+    
+    ["users", "waitlist"].each do |f|
+      %x!touch .#{f}! unless File.exists?(".#{f}")
+    end
 
     set :public,    "#{dir}/public"
     set :static,    true
@@ -48,8 +52,8 @@ module Precious
         if users.find{|u| u == session[:openid]}
           return show_page_or_file('Home')
         else
-          @message = "Your membership on this wiki is pending moderator approval. Your application code is: #{session[:openid]}"
-          return mustache :error
+          @openid = session[:openid]
+          return mustache :pending
         end
       end
       redirect '/login'
@@ -63,7 +67,8 @@ module Precious
       if resp = request.env["rack.openid.response"]
         if resp.status == :success
           session[:openid] = resp.display_identifier
-          File.open('.waitlist', 'a+') {|f| f.write(resp.display_identifier)}
+          waitlist = File.read('.waitlist').split("\n").push(resp.display_identifier).uniq
+          File.open('.waitlist', 'w') {|f| f.write(waitlist.join("\n"))}
         else
         end
       else
